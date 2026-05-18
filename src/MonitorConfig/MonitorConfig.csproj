@@ -20,4 +20,51 @@
     <Exec Command="pwsh.exe -NoProfile -Command &quot;$(ProjectDir)..\..\PostBuild.ps1 -OutputFile $(TargetPath)&quot;" />
   </Target>
 
+  <!-- Suppress PostBuild (platyPS) when building for local use -->
+  <Target Name="PostBuild" Condition="'$(LocalDistBuild)' == 'true'" />
+
+  <PropertyGroup>
+    <LocalDistDir Condition="'$(LocalDistDir)' == ''">$(MSBuildThisFileDirectory)..\..\dist</LocalDistDir>
+  </PropertyGroup>
+
+  <Target Name="LocalDist" DependsOnTargets="Build">
+    <MakeDir Directories="$(LocalDistDir)" />
+
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(LocalDistDir)" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)..\..\PowerShellFormatFiles\MonitorConfigFormat.ps1xml" DestinationFolder="$(LocalDistDir)" />
+
+    <PropertyGroup>
+      <_Psd1Content>@{
+    RootModule           = 'MonitorConfig.dll'
+    ModuleVersion        = '2.2.0'
+    CompatiblePSEditions = @('Core', 'Desktop')
+    GUID                 = '552fa35c-0b32-42f6-858a-64d5ed0b05e6'
+    Author               = 'MartinGC94'
+    PowerShellVersion    = '5.1'
+    FormatsToProcess     = @('MonitorConfigFormat.ps1xml')
+    FunctionsToExport    = @()
+    CmdletsToExport      = @(
+        'Get-Monitor',
+        'Get-MonitorBrightness',
+        'Get-MonitorColorSettings',
+        'Get-MonitorDetails',
+        'Get-MonitorInput',
+        'Get-MonitorVCPResponse',
+        'Reset-MonitorSettings',
+        'Save-MonitorSettings',
+        'Set-MonitorBrightness',
+        'Set-MonitorColorSettings',
+        'Set-MonitorInput',
+        'Set-MonitorVCPValue'
+    )
+    VariablesToExport    = @()
+    AliasesToExport      = @()
+}</_Psd1Content>
+    </PropertyGroup>
+
+    <WriteLinesToFile File="$(LocalDistDir)\MonitorConfig.psd1" Lines="$(_Psd1Content)" Overwrite="true" />
+
+    <Message Importance="high" Text="LocalDist output: $(LocalDistDir)" />
+  </Target>
+
 </Project>
